@@ -24,10 +24,10 @@ const Login = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-
+  
     try {
       const response = await fetch('https://bpkbautodigital.com/api/auth/login', {
-        method: 'POST',
+        method: 'POST', // Ensure it's POST
         headers: {
           'Content-Type': 'application/json',
         },
@@ -37,13 +37,13 @@ const Login = () => {
           password: formData.password,
         }),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         console.log('Login successful:', data);
         localStorage.setItem('access_token', data.access_token);
-        navigate('/dashboard'); 
+        navigate('/dashboard');
       } else {
         setError(data.message || 'Login failed');
         console.log('Login failed:', data);
@@ -55,6 +55,7 @@ const Login = () => {
       setIsSubmitting(false);
     }
   };
+  
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">

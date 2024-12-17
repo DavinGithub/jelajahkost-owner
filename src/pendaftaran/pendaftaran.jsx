@@ -1,7 +1,6 @@
-// src/Pendaftaran/Pendaftaran.jsx
 import { Users, Package, TrendingUp, Clock, Edit, Eye } from 'lucide-react';
 import Sidebar from '../layout/sidebar';
-import React, { useEffect, useState } from 'react'; 
+import React, { useEffect, useState } from 'react';
 import PendaftaranModal from './pendaftaranmodal';
 
 const StatCard = ({ title, value, icon: Icon, change, changeType }) => (
@@ -14,8 +13,28 @@ const StatCard = ({ title, value, icon: Icon, change, changeType }) => (
           {changeType === 'up' ? '↑' : '↓'} {change}
         </p>
       </div>
-      <div className={`p-3 rounded-full ${title === 'Total User' ? 'bg-blue-50' : title === 'Total Order' ? 'bg-yellow-50' : title === 'Total Sales' ? 'bg-green-50' : 'bg-red-50'}`}>
-        <Icon className={title === 'Total User' ? 'text-blue-500' : title === 'Total Order' ? 'text-yellow-500' : title === 'Total Sales' ? 'text-green-500' : 'text-red-500'} />
+      <div
+        className={`p-3 rounded-full ${
+          title === 'Total User'
+            ? 'bg-blue-50'
+            : title === 'Total Order'
+            ? 'bg-yellow-50'
+            : title === 'Total Sales'
+            ? 'bg-green-50'
+            : 'bg-red-50'
+        }`}
+      >
+        <Icon
+          className={
+            title === 'Total User'
+              ? 'text-blue-500'
+              : title === 'Total Order'
+              ? 'text-yellow-500'
+              : title === 'Total Sales'
+              ? 'text-green-500'
+              : 'text-red-500'
+          }
+        />
       </div>
     </div>
   </div>
@@ -23,7 +42,7 @@ const StatCard = ({ title, value, icon: Icon, change, changeType }) => (
 
 const Pendaftaran = () => {
   const [kosts, setKosts] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);  // State to toggle modal
+  const [isModalOpen, setIsModalOpen] = useState(false); // State to toggle modal
   const [selectedKost, setSelectedKost] = useState(null); // State for selected kost
   const [formData, setFormData] = useState({
     name: '',
@@ -58,7 +77,7 @@ const Pendaftaran = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(formData);  // Handle the form submission here
+    console.log(formData); // Handle the form submission here
   };
 
   const handleDetailClick = (id) => {
@@ -83,6 +102,12 @@ const Pendaftaran = () => {
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Kost didaftarkan</h2>
+            <button
+              onClick={() => setIsModalOpen(true)} // Membuka modal
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
+            >
+              Tambah Kost
+            </button>
           </div>
 
           <div className="overflow-x-auto">
@@ -115,13 +140,13 @@ const Pendaftaran = () => {
           </div>
         </div>
 
-        <PendaftaranModal 
-          isModalOpen={isModalOpen} 
-          setIsModalOpen={setIsModalOpen} 
-          formData={formData} 
-          handleInputChange={handleInputChange} 
-          handleSubmit={handleSubmit} 
-          selectedKost={selectedKost} 
+        <PendaftaranModal
+          isModalOpen={isModalOpen}
+          setIsModalOpen={setIsModalOpen}
+          formData={formData}
+          handleInputChange={handleInputChange}
+          handleSubmit={handleSubmit}
+          selectedKost={selectedKost}
         />
       </div>
     </div>

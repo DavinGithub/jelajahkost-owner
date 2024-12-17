@@ -53,11 +53,18 @@ const PendaftaranModal = ({ isModalOpen, setIsModalOpen }) => {
       });
       // Append image file
       formDataToSend.append('image', image);
+      
+      const token = localStorage.getItem('acces_token');
 
-      const response = await fetch('bpkbautodigital.com/api/kost/insert-kost', {
+
+      const response = await fetch('https://bpkbautodigital.com/api/kost/insert-kost', {
         method: 'POST',
-        body: formDataToSend,
+        headers: {
+          'Authorization': `Bearer ${token}`, // Correct space formatting
+        },
+        body: formDataToSend, // FormData automatically handles Content-Type
       });
+      
 
       if (!response.ok) {
         throw new Error('Failed to add kost');
