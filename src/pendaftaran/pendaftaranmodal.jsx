@@ -42,7 +42,7 @@ const PendaftaranModal = ({ isModalOpen, setIsModalOpen }) => {
       alert('Please select an image');
       return;
     }
-
+  
     setIsSubmitting(true);
     
     try {
@@ -54,22 +54,20 @@ const PendaftaranModal = ({ isModalOpen, setIsModalOpen }) => {
       // Append image file
       formDataToSend.append('image', image);
       
-      const token = localStorage.getItem('acces_token');
-
-
+      const token = localStorage.getItem('access_token');
+  
       const response = await fetch('https://bpkbautodigital.com/api/kost/insert-kost', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`, // Correct space formatting
+          'Authorization': `Bearer ${token}`, // Corrected token formatting
         },
-        body: formDataToSend, // FormData automatically handles Content-Type
+        body: formDataToSend, // FormData sets Content-Type automatically
       });
-      
-
+  
       if (!response.ok) {
         throw new Error('Failed to add kost');
       }
-
+  
       const result = await response.json();
       alert('Kost added successfully!');
       setIsModalOpen(false);
@@ -82,7 +80,7 @@ const PendaftaranModal = ({ isModalOpen, setIsModalOpen }) => {
         address: '',
         city: '',
         regency: '',
-        kost_type: 'kost_reguler'
+        kost_type: 'Kost Reguler'
       });
       setImage(null);
       setPreview(null);
@@ -93,7 +91,8 @@ const PendaftaranModal = ({ isModalOpen, setIsModalOpen }) => {
       setIsSubmitting(false);
     }
   };
-
+  
+  
   return (
     isModalOpen && (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50 z-50">
