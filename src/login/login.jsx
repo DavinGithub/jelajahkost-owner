@@ -43,7 +43,7 @@ const Login = () => {
       if (response.ok) {
         console.log('Login successful:', data);
         localStorage.setItem('access_token', data.access_token);
-        navigate('/dashboard');
+        navigate('/pendaftaran');
       } else {
         setError(data.message || 'Login failed');
         console.log('Login failed:', data);
@@ -60,7 +60,7 @@ const Login = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-4">Login</h2>
+        <h2 className="text-2xl font-semibold text-center text-gray-800 mb-4">Login Owner</h2>
         <form onSubmit={handleSubmit}>
           {error && (
             <div className="mb-4 text-red-600 text-center">{error}</div>

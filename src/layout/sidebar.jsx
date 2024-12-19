@@ -5,14 +5,13 @@ const Sidebar = () => {
   const location = useLocation();
 
   const menuItems = [
-    { title: 'Dashboard', icon: <LayoutDashboard size={20} />, path: '/dashboard' },
     { title: 'Pendaftaran', icon: <LayoutDashboard size={20} />, path: '/pendaftaran' },
   ];
 
   return (
-    <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col">
+    <div className="fixed top-0 left-0 w-64 h-screen bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
       <div className="p-4">
-        <h1 className="text-xl font-semibold text-blue-600">DashStack</h1>
+        <h1 className="text-xl font-semibold text-blue-600">Jelajahkost owner</h1>
       </div>
       <nav className="flex-1 p-2">
         {menuItems.map((item, index) => (

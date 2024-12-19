@@ -27,7 +27,6 @@ const PendaftaranModal = ({ isModalOpen, setIsModalOpen }) => {
     const file = e.target.files[0];
     if (file) {
       setImage(file);
-      // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         setPreview(reader.result);
@@ -42,35 +41,37 @@ const PendaftaranModal = ({ isModalOpen, setIsModalOpen }) => {
       alert('Please select an image');
       return;
     }
-  
+
     setIsSubmitting(true);
-    
+
     try {
       const formDataToSend = new FormData();
-      // Append all form fields
       Object.keys(formData).forEach(key => {
         formDataToSend.append(key, formData[key]);
       });
-      // Append image file
       formDataToSend.append('image', image);
-      
+
       const token = localStorage.getItem('access_token');
-  
+
       const response = await fetch('https://bpkbautodigital.com/api/kost/insert-kost', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`, // Corrected token formatting
+          'Authorization': `Bearer ${token}`,
         },
-        body: formDataToSend, // FormData sets Content-Type automatically
+        body: formDataToSend,
       });
-  
+
       if (!response.ok) {
         throw new Error('Failed to add kost');
       }
-  
+
       const result = await response.json();
       alert('Kost added successfully!');
       setIsModalOpen(false);
+
+      // Reload halaman setelah pengiriman berhasil
+      window.location.reload();
+
       // Reset form
       setFormData({
         name: '',
@@ -80,7 +81,7 @@ const PendaftaranModal = ({ isModalOpen, setIsModalOpen }) => {
         address: '',
         city: '',
         regency: '',
-        kost_type: 'Kost Reguler'
+        kost_type: 'kost_reguler'
       });
       setImage(null);
       setPreview(null);
@@ -91,8 +92,7 @@ const PendaftaranModal = ({ isModalOpen, setIsModalOpen }) => {
       setIsSubmitting(false);
     }
   };
-  
-  
+
   return (
     isModalOpen && (
       <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50 z-50">

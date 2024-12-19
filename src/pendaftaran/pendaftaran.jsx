@@ -3,47 +3,12 @@ import Sidebar from '../layout/sidebar';
 import React, { useEffect, useState } from 'react';
 import PendaftaranModal from './pendaftaranmodal';
 
-const StatCard = ({ title, value, icon: Icon, change, changeType }) => (
-  <div className="bg-white p-6 rounded-lg shadow-sm">
-    <div className="flex justify-between items-start">
-      <div>
-        <h3 className="text-gray-500 text-sm">{title}</h3>
-        <p className="text-2xl font-semibold mt-1">{value}</p>
-        <p className={`text-sm mt-2 flex items-center ${changeType === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-          {changeType === 'up' ? '↑' : '↓'} {change}
-        </p>
-      </div>
-      <div
-        className={`p-3 rounded-full ${
-          title === 'Total User'
-            ? 'bg-blue-50'
-            : title === 'Total Order'
-            ? 'bg-yellow-50'
-            : title === 'Total Sales'
-            ? 'bg-green-50'
-            : 'bg-red-50'
-        }`}
-      >
-        <Icon
-          className={
-            title === 'Total User'
-              ? 'text-blue-500'
-              : title === 'Total Order'
-              ? 'text-yellow-500'
-              : title === 'Total Sales'
-              ? 'text-green-500'
-              : 'text-red-500'
-          }
-        />
-      </div>
-    </div>
-  </div>
-);
-
 const Pendaftaran = () => {
   const [kosts, setKosts] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false); // State to toggle modal
-  const [selectedKost, setSelectedKost] = useState(null); // State for selected kost
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedKost, setSelectedKost] = useState(null);
+  const [error, setError] = useState(null);
+  const [waNumber, setWaNumber] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     price: '',
@@ -64,50 +29,214 @@ const Pendaftaran = () => {
     }));
   };
 
-  useEffect(() => {
-    const fetchKosts = async () => {
-      const response = await fetch('https://bpkbautodigital.com/api/kost');
+  
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const access_token = localStorage.getItem('access_token');
+      if (!access_token) {
+        setError('No authentication token found');
+        return;
+      }
+
+      const formDataToSend = new FormData();
+      for (const key in formData) {
+        formDataToSend.append(key, formData[key]);
+      }
+
+      const response = await fetch('https://bpkbautodigital.com/api/kost', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Accept': 'application/json',
+        },
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.status === 'success') {
+        setIsModalOpen(false);
+        fetchKosts();
+        setFormData({
+          name: '',
+          price: '',
+          phone_number: '',
+          image: '',
+          description: '',
+          address: '',
+          city: '',
+          regency: '',
+          kost_type: 'kost_reguler',
+        });
+        setError(null);
+      } else {
+        setError(data.message || 'Failed to submit kost');
+      }
+    } catch (error) {
+      console.error('Error submitting kost:', error);
+      setError(error.message);
+    }
+  };
+
+ 
+
+  const fetchKosts = async () => {
+    try {
+      const access_token = localStorage.getItem('access_token');
+      if (!access_token) {
+        setError('No authentication token found');
+        return;
+      }
+      const response = await fetch('https://bpkbautodigital.com/api/kost/my-kost', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const data = await response.json();
       if (data.status === 'success') {
         setKosts(data.data);
+        setError(null);
+      } else {
+        setError(data.message || 'Failed to fetch kosts');
       }
-    };
-    fetchKosts();
-  }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(formData); // Handle the form submission here
+    } catch (error) {
+      console.error('Error fetching kosts:', error);
+      setError(error.message);
+    }
   };
 
-  const handleDetailClick = (id) => {
-    const fetchKostDetail = async () => {
-      const response = await fetch(`https://bpkbautodigital.com/api/kost/detail/${id}`);
+  const fetchwa = async () => {
+    try {
+      const response = await fetch('https://bpkbautodigital.com/api/whatsapp', {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
       const data = await response.json();
       if (data.status === 'success') {
-        setSelectedKost(data.data); // Set selected kost data
-        setIsModalOpen(true); // Open modal
+        setWaNumber(data.wa_number);
+        setError(null);
+      } else {
+        setError(data.message || 'Failed to fetch WhatsApp number');
       }
-    };
-    fetchKostDetail();
+    } catch (error) {
+      console.error('Error fetching WhatsApp number:', error);
+      setError(error.message);
+    }
+  };
+  
+
+  useEffect(() => {
+    fetchKosts();
+    fetchwa(); 
+  }, []);
+
+  const handleDetailClick = async (id) => {
+    try {
+      const access_token = localStorage.getItem('access_token');
+      if (!access_token) {
+        setError('No authentication token found');
+        return;
+      }
+
+      const response = await fetch(`https://bpkbautodigital.com/api/kost/detail/${id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.status === 'success') {
+        setSelectedKost(data.data);
+        setIsModalOpen(true);
+        setError(null);
+      } else {
+        setError(data.message || 'Failed to fetch kost detail');
+      }
+    } catch (error) {
+      console.error('Error fetching kost detail:', error);
+      setError(error.message);
+    }
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const formatKostType = (type) => {
+    return type.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Sidebar />
 
-      <div className="flex-1 p-8">
-        <h1 className="text-2xl font-semibold mb-6">Pendaftaran</h1>
+      <div className="ml-64 p-8">
+      <h1 className="text-2xl font-semibold mb-6">Kost didaftarkan</h1>
+
+        {error && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">Kost didaftarkan</h2>
+            <h2 className="text-xl font-semibold">Registrasi kost</h2>
+            <div className='flex gap-4'> 
             <button
-              onClick={() => setIsModalOpen(true)} // Membuka modal
+              onClick={() => setIsModalOpen(true)}
               className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
             >
-              Tambah Kost
+              Tambahkan kost
             </button>
+            <button
+            onClick={() => {
+              if (waNumber) {
+                window.open(waNumber, '_blank');
+              } else {
+                alert('WhatsApp number not available.');
+              }
+            }}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
+          >
+            Perpanjang kost
+          </button>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
@@ -117,22 +246,43 @@ const Pendaftaran = () => {
                   <th className="pb-4">No</th>
                   <th className="pb-4">Image</th>
                   <th className="pb-4">Name</th>
-                  <th className="pb-4">Owner</th>
                   <th className="pb-4">Type</th>
                   <th className="pb-4">Price</th>
+                  <th className="pb-4">Status</th>
+                  <th className="pb-4">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {kosts.map((kost, index) => (
-                  <tr key={index} className="border-t">
+                  <tr key={kost.id} className="border-t">
                     <td className="py-4">{index + 1}</td>
                     <td className="py-4">
                       <img src={kost.image} alt={kost.name} className="w-12 h-12 rounded-md object-cover" />
                     </td>
                     <td className="py-4">{kost.name}</td>
-                    <td className="py-4">{kost.owner}</td>
-                    <td className="py-4">{kost.kost_type}</td>
-                    <td className="py-4">{kost.price}</td>
+                    <td className="py-4">{formatKostType(kost.kost_type)}</td>
+                    <td className="py-4">{formatPrice(kost.price)}</td>
+                    <td className="py-4">
+                      <span className={`px-2 py-1 rounded-full text-xs ${
+                        kost.status === 'tersedia' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {kost.status.charAt(0).toUpperCase() + kost.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="py-4">
+                      <button
+                        onClick={() => handleDetailClick(kost.id)}
+                        className="text-blue-500 hover:text-blue-700 mr-2"
+                      >
+                        <Eye className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => {/* Handle edit */}}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <Edit className="w-5 h-5" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
