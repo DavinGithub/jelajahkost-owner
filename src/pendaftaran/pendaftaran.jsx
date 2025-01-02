@@ -1,12 +1,15 @@
-import { Users, Package, TrendingUp, Clock, Edit, Eye } from 'lucide-react';
+import { Users, Package, TrendingUp, Clock, Edit, Trash } from 'lucide-react';
 import Sidebar from '../layout/sidebar';
 import React, { useEffect, useState } from 'react';
 import PendaftaranModal from './pendaftaranmodal';
+import EditModal from './editmodal';
+
 
 const Pendaftaran = () => {
   const [kosts, setKosts] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedKost, setSelectedKost] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingKost, setEditingKost] = useState(null);
   const [error, setError] = useState(null);
   const [waNumber, setWaNumber] = useState('');
   const [formData, setFormData] = useState({
@@ -22,14 +25,123 @@ const Pendaftaran = () => {
   });
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, files } = e.target;
     setFormData((prevData) => ({
       ...prevData,
-      [name]: value,
+      [name]: type === 'file' ? files[0] : value,
     }));
   };
 
+  const handleEditClick = (kost) => {
+    setEditingKost(kost);
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const access_token = localStorage.getItem('access_token');
+      if (!access_token) {
+        setError('No authentication token found');
+        return;
+      }
   
+      const formDataToSend = new FormData();
+      
+      // Append _method=PUT to handle Laravel's form method spoofing
+      formDataToSend.append('_method', 'PUT');
+  
+      // Append all other form fields
+      for (const key in editingKost) {
+        if (editingKost[key] !== null && editingKost[key] !== undefined) {
+          // Handle File objects separately
+          if (key === 'image' && editingKost[key] instanceof File) {
+            formDataToSend.append('image', editingKost[key]);
+          } else if (key === 'price') {
+            // Ensure price is sent as a string
+            formDataToSend.append('price', editingKost[key].toString());
+          } else if (typeof editingKost[key] !== 'object') {
+            formDataToSend.append(key, editingKost[key]);
+          }
+        }
+      }
+  
+      // Use POST method with _method=PUT in FormData for proper method spoofing
+      const response = await fetch(`https://jelajahkost.com/api/kost/update-kost/${editingKost.id}`, {
+        method: 'POST', // Change to POST while using _method=PUT in FormData
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Accept': 'application/json',
+          // Remove Content-Type header to let browser set it with boundary for FormData
+        },
+        body: formDataToSend,
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      if (data.status === 'success' || data.message === 'Successfully updated kost!') {
+        setIsEditModalOpen(false);
+        setEditingKost(null);
+        await fetchKosts();
+        setError(null);
+      } else {
+        setError(data.message || 'Failed to update kost');
+      }
+    } catch (error) {
+      console.error('Error updating kost:', error);
+      setError(error.message);
+    }
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value, type, files } = e.target;
+    setEditingKost(prev => ({
+      ...prev,
+      [name]: type === 'file' ? files[0] : value
+    }));
+  };
+
+  const handleDeleteClick = async (id) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus kost ini?')) return;
+  
+    try {
+      const access_token = localStorage.getItem('access_token');
+      if (!access_token) {
+        setError('No authentication token found');
+        return;
+      }
+  
+      const response = await fetch(`https://jelajahkost.com/api/kost/delete/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+      if (data.status === 'success') {
+        setError(null);
+        setKosts(prevKosts => prevKosts.filter(kost => kost.id !== id));
+        window.location.reload();
+      } else {
+        setError(data.message || 'Failed to delete kost');
+      }
+    } catch (error) {
+      console.error('Error deleting kost:', error);
+      setError(error.message);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,7 +157,7 @@ const Pendaftaran = () => {
         formDataToSend.append(key, formData[key]);
       }
 
-      const response = await fetch('https://bpkbautodigital.com/api/kost', {
+      const response = await fetch('https://jelajahkost.com/api/kost', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -74,6 +186,7 @@ const Pendaftaran = () => {
           kost_type: 'kost_reguler',
         });
         setError(null);
+        window.location.reload();
       } else {
         setError(data.message || 'Failed to submit kost');
       }
@@ -83,8 +196,6 @@ const Pendaftaran = () => {
     }
   };
 
- 
-
   const fetchKosts = async () => {
     try {
       const access_token = localStorage.getItem('access_token');
@@ -92,7 +203,7 @@ const Pendaftaran = () => {
         setError('No authentication token found');
         return;
       }
-      const response = await fetch('https://bpkbautodigital.com/api/kost/my-kost', {
+      const response = await fetch('https://jelajahkost.com/api/kost/my-kost', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${access_token}`,
@@ -120,7 +231,7 @@ const Pendaftaran = () => {
 
   const fetchwa = async () => {
     try {
-      const response = await fetch('https://bpkbautodigital.com/api/whatsapp', {
+      const response = await fetch('https://jelajahkost.com/api/whatsapp', {
         method: 'GET',
         headers: {
           'Accept': 'application/json',
@@ -144,47 +255,11 @@ const Pendaftaran = () => {
       setError(error.message);
     }
   };
-  
 
   useEffect(() => {
     fetchKosts();
-    fetchwa(); 
+    fetchwa();
   }, []);
-
-  const handleDetailClick = async (id) => {
-    try {
-      const access_token = localStorage.getItem('access_token');
-      if (!access_token) {
-        setError('No authentication token found');
-        return;
-      }
-
-      const response = await fetch(`https://bpkbautodigital.com/api/kost/detail/${id}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${access_token}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (data.status === 'success') {
-        setSelectedKost(data.data);
-        setIsModalOpen(true);
-        setError(null);
-      } else {
-        setError(data.message || 'Failed to fetch kost detail');
-      }
-    } catch (error) {
-      console.error('Error fetching kost detail:', error);
-      setError(error.message);
-    }
-  };
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('id-ID', {
@@ -206,7 +281,7 @@ const Pendaftaran = () => {
       <Sidebar />
 
       <div className="ml-64 p-8">
-      <h1 className="text-2xl font-semibold mb-6">Kost didaftarkan</h1>
+        <h1 className="text-2xl font-semibold mb-6">Kost didaftarkan</h1>
 
         {error && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -218,24 +293,24 @@ const Pendaftaran = () => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">Registrasi kost</h2>
             <div className='flex gap-4'> 
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
-            >
-              Tambahkan kost
-            </button>
-            <button
-            onClick={() => {
-              if (waNumber) {
-                window.open(waNumber, '_blank');
-              } else {
-                alert('WhatsApp number not available.');
-              }
-            }}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
-          >
-            Perpanjang kost
-          </button>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
+              >
+                Tambahkan kost
+              </button>
+              <button
+                onClick={() => {
+                  if (waNumber) {
+                    window.open(waNumber, '_blank');
+                  } else {
+                    alert('WhatsApp number not available.');
+                  }
+                }}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow-sm transition-all duration-200"
+              >
+                Perpanjang kost
+              </button>
             </div>
           </div>
 
@@ -271,13 +346,13 @@ const Pendaftaran = () => {
                     </td>
                     <td className="py-4">
                       <button
-                        onClick={() => handleDetailClick(kost.id)}
-                        className="text-blue-500 hover:text-blue-700 mr-2"
+                        onClick={() => handleDeleteClick(kost.id)}
+                        className="text-red-500 hover:text-red-700 mr-2"
                       >
-                        <Eye className="w-5 h-5" />
+                        <Trash className="w-5 h-5" />
                       </button>
                       <button
-                        onClick={() => {/* Handle edit */}}
+                        onClick={() => handleEditClick(kost)}
                         className="text-gray-500 hover:text-gray-700"
                       >
                         <Edit className="w-5 h-5" />
@@ -296,7 +371,17 @@ const Pendaftaran = () => {
           formData={formData}
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
-          selectedKost={selectedKost}
+        />
+
+        <EditModal
+          isOpen={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingKost(null);
+          }}
+          kostData={editingKost || {}}
+          onSubmit={handleEditSubmit}
+          onChange={handleEditInputChange}
         />
       </div>
     </div>

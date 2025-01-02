@@ -53,7 +53,7 @@ const PendaftaranModal = ({ isModalOpen, setIsModalOpen }) => {
 
       const token = localStorage.getItem('access_token');
 
-      const response = await fetch('https://bpkbautodigital.com/api/kost/insert-kost', {
+      const response = await fetch('https://jelajahkost.com/api/kost/insert-kost', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

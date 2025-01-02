@@ -24,9 +24,9 @@ const Login = () => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-  
+
     try {
-      const response = await fetch('https://bpkbautodigital.com/api/auth/login', {
+      const response = await fetch('https://jelajahkost.com/api/auth/login', {
         method: 'POST', // Ensure it's POST
         headers: {
           'Content-Type': 'application/json',
@@ -37,9 +37,9 @@ const Login = () => {
           password: formData.password,
         }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok) {
         console.log('Login successful:', data);
         localStorage.setItem('access_token', data.access_token);
@@ -55,7 +55,10 @@ const Login = () => {
       setIsSubmitting(false);
     }
   };
-  
+
+  const handleRedirectToRegister = () => {
+    navigate('/register'); // Redirect to register page
+  };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -121,9 +124,20 @@ const Login = () => {
             {isSubmitting ? 'Logging in...' : 'Login'}
           </button>
         </form>
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <button
+              onClick={handleRedirectToRegister}
+              className="text-indigo-600 hover:text-indigo-700"
+            >
+              Register here
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   );
 };
- 
+
 export default Login;
